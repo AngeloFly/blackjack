@@ -1,0 +1,2 @@
+# blackjack
+learn for javascript
