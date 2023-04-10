@@ -8,7 +8,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO,filename='bulkmsg.log')
 logger = logging.getLogger(__name__)
 config = configparser.ConfigParser()
-config.read('bulkmsg.ini')
+config.read('config.ini')
 #配置文件导入的所有值  都是字符串，需要根据需要转换list int ......
 api_id=config['API']['api_id']
 api_hash = config['API']['api_hash']
