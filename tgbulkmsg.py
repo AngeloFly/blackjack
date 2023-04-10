@@ -3,6 +3,7 @@ from telethon.tl.types import InputMessagesFilterPhotos
 import configparser
 import time
 import random
+import logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO,filename='bulkmsg.log')
 logger = logging.getLogger(__name__)
