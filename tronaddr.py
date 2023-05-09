@@ -7,7 +7,7 @@ import time
 import numba as nb
 from numba import cuda
 import numpy as np
-
+import logging
 from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig(filename='tron.log', level=logging.INFO)
 logging.basicConfig(format='%(asctime)s %(message)s')
