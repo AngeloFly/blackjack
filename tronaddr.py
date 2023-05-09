@@ -9,8 +9,8 @@ from numba import cuda
 import numpy as np
 import logging
 from concurrent.futures import ThreadPoolExecutor
-logging.basicConfig(filename='tron.log', level=logging.INFO)
-logging.basicConfig(format='%(asctime)s %(message)s')
+
+logging.basicConfig(filename='tron.log', level=logging.INFO, format='%(asctime)s %(message)s')
 
 @cuda.jit(device=True)
 def sha256(data):
@@ -48,7 +48,7 @@ def get_public_key_bytes(private_key):
     return b"\x04" + verifying_key.to_string()
 
 @cuda.jit(device=True)
-def generate_tron_address_kernel(d_tron_address):
+def generate_tron_address_kernel(d_tron_address, d_private_key):
     # CUDA设备函数，生成Tron地址
     i = cuda.grid(1)
 
@@ -76,23 +76,28 @@ def generate_tron_address_kernel(d_tron_address):
         address = prefix_ripemd160_hash + sha256_hash2[:4]
         tron_address = encode_base58(address)
 
-        # 将地址存储在设备数组中
+        # 将地址和私钥存储在设备数组中
         d_tron_address[i] = tron_address
+        d_private_key[i] = private_key
+
+    return d_tron_address, d_private_key
 
 def generate_tron_address():
     # 使用Numba和CUDA进行GPU加速的Tron地址生成函数
     threads_per_block = 1024
     blocks_per_grid = 30
-    d_tron_address = cuda.device_array(threads_per_block * blocks_per_grid, dtype=np.str_)
-    generate_tron_address_kernel[blocks_per_grid, threads_per_block](d_tron_address)
+    d_tron_address = cuda.device_array(threads_per_block * blocks_per_grid, dtype=np.dtype('U34'))
+    d_private_key = cuda.device_array(threads_per_block * blocks_per_grid, dtype=np.dtype('S32'))
+    generate_tron_address_kernel[blocks_per_grid, threads_per_block](d_tron_address, d_private_key)
 
     # 将结果复制回主机内存
     h_tron_address = d_tron_address.copy_to_host()
+    h_private_key = d_private_key.copy_to_host()
 
-    # 返回第一个非空地址
-    for address in h_tron_address:
-        if address != '':
-            return address, binascii.hexlify(private_key).decode('utf-8')
+    # 返回第一个非空地址和私钥
+    for i in range(len(h_tron_address)):
+        if h_tron_address[i] != '':
+            return h_tron_address[i], binascii.hexlify(h_private_key[i]).decode('utf-8')
 
     return None
 
