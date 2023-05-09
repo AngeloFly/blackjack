@@ -12,6 +12,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(filename='tron.log', level=logging.INFO, format='%(asctime)s %(message)s')
 
+def generate_tron_address_private_key():
+    # 生成随机私钥
+    return os.urandom(32)
+
 @cuda.jit(device=True)
 def sha256(data):
     # CUDA设备函数，计算sha256哈希值
@@ -34,11 +38,6 @@ def prefix(data, prefix):
 def encode_base58(data):
     # CUDA设备函数，base58编码
     return base58.b58encode(data)
-
-@cuda.jit(device=True)
-def generate_tron_address_private_key():
-    # CUDA设备函数，生成随机私钥
-    return os.urandom(32)
 
 @cuda.jit(device=True)
 def get_public_key_bytes(private_key):
