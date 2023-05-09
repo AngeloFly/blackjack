@@ -6,7 +6,8 @@ import hashlib
 import time
 import numba as nb
 from numba import cuda
-import logging
+import numpy as np
+
 from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig(filename='tron.log', level=logging.INFO)
 logging.basicConfig(format='%(asctime)s %(message)s')
