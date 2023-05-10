@@ -11,7 +11,9 @@ def generate_tron_address_kernel(h_tron_address, h_private_key):
     thread_idx = cuda.threadIdx.x + cuda.blockIdx.x * cuda.blockDim.x
 
     # 生成随机私钥
-    private_key = cp.random.bytes(32)
+    #private_key = cp.random.bytes(32)
+    private_key = cp.random.randint(256, size=32, dtype="uint8").tobytes()
+
 
     # 获取公钥
     signing_key = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
