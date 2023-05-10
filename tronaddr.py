@@ -1,25 +1,17 @@
-import base58
+import os
 import binascii
 import ecdsa
 import hashlib
-import cupy as cp
-from numba import cuda
-cuda.select_device(0)
+import torch
+import numpy as np
+import base58
 
-@cuda.jit
-def generate_tron_address_kernel(h_tron_address, h_private_key):
-    # 获取线程索引
-    thread_idx = cuda.threadIdx.x + cuda.blockIdx.x * cuda.blockDim.x
-
+def generate_tron_address():
     # 生成随机私钥
-    #private_key = cp.random.bytes(32)
-   # private_key = cp.random.randint(256, size=32, dtype="uint8").tobytes()
-    private_key = cp.random.sample(size=32).astype('uint8').tobytes()
-
-
+    private_key = torch.tensor(np.frombuffer(os.urandom(32), dtype=np.uint8)).cuda()
 
     # 获取公钥
-    signing_key = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
+    signing_key = ecdsa.SigningKey.from_string(private_key.cpu().numpy(), curve=ecdsa.SECP256k1)
     verifying_key = signing_key.get_verifying_key()
 
     # 添加字节前缀并哈希
@@ -45,21 +37,6 @@ def generate_tron_address_kernel(h_tron_address, h_private_key):
     address = prefix_ripemd160_hash + sha256_hash2[:4]
     tron_address = base58.b58encode(address)
 
-    # 将结果存储在cupy数组中
-    h_tron_address[thread_idx] = tron_address.decode('utf-8')
-    h_private_key[thread_idx] = binascii.hexlify(private_key).decode('utf-8')
+    return tron_address.decode('utf-8'),binascii.hexlify(private_key.cpu().numpy()).decode('utf-8')
 
-# 创建cupy数组来存储结果
-threads_per_block = 1024
-blocks_per_grid = 30
-h_tron_address = cp.empty(threads_per_block * blocks_per_grid, dtype=cp.dtype('U34'))
-h_private_key = cp.empty(threads_per_block * blocks_per_grid, dtype=cp.dtype('S32'))
-
-# 在GPU上运行生成Tron地址的函数
-generate_tron_address_kernel[blocks_per_grid, threads_per_block](h_tron_address, h_private_key)
-
-# 找到第一个非空地址和私钥
-for i in range(len(h_tron_address)):
-    if h_tron_address[i] != '':
-        print(len(h_tron_address[i]))
-        break
+print(len(generate_tron_address()[0]))
