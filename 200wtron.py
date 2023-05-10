@@ -25,7 +25,9 @@ for i in range(2000000):
     public_key = torch.tensor(np.frombuffer(public_key_bytes, dtype=np.uint8)).to(device)
 
     # 添加字节前缀并哈希
-    sha256_hash = hashlib.sha256(public_key).digest()
+    public_key_bytes = (b"\x04" + verifying_key.to_string())
+    public_key_bytes = bytes(public_key_bytes)
+    sha256_hash = hashlib.sha256(public_key_bytes).digest()
 
     # 计算ripemd160哈希
     ripemd160_hasher = hashlib.new("ripemd160")
