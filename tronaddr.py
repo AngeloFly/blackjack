@@ -4,6 +4,7 @@ import ecdsa
 import hashlib
 import cupy as cp
 from numba import cuda
+cuda.select_device(0)
 
 @cuda.jit
 def generate_tron_address_kernel(h_tron_address, h_private_key):
